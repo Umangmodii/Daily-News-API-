@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> Daily News</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+  <style>
+    .navbar.fixed-top {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+  </style>
+
+   <!-- Image and text -->
+   <nav class="navbar navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="/">
+      <img src="image/logo.png" width="30" height="30" class="d-inline-block align-top" alt="">
+      Daily News
+    </a>
+  </nav>
+
+  <div class="container mt-3">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <label for="categorySelect">Select Category </label>
+        <select id="categorySelect" class="form-control">
+          <option value="general">General</option>
+          <option value="business">Business</option>
+          <option value="entertainment">Entertainment</option>
+          <option value="health">Health</option>
+          <option value="science">Science</option>
+          <option value="sports">Sports</option>
+          <option value="technology">Technology</option>
+        </select>
+      </div>
+    </div>
+    <div id="newsList" class="row"></div>
+  </div>
+
+  <div id="pagination" class="row justify-content-center mt-4"></div>
+
+  <br>
+
+  <footer class="bg-body-tertiary text-center text-lg-start bg-dark">
+    <!-- Copyright -->
+    <div class="text-center p-3 text-white" style="background-color: rgba(0, 0, 0, 0.05);">
+      © 2024 Copyright:
+      <a class="text-whitetext-body " href="https://imagesearchfinder.netlify.app/">Umang Modi</a>
+    </div>
+    <!-- Copyright -->
+  </footer>
+
+
+  <!-- Bootstrap JS and jQuery -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- Your custom JavaScript -->
+  <script src="script.js"></script>
+  <script>
+    const apiKey = '517943cde04b4275b0d56636de665c1e'; // Replace 'YOUR_NEWS_API_KEY' with your actual News API key
+
+    // Function to fetch news based on category
+    async function fetchNews(category) {
+      const apiUrl = `https://newsapi.org/v2/top-headlines?country=in&category=${category}&apiKey=${apiKey}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        console.log('Total articles fetched:', data.articles.length); // Add this line
+        return data.articles;
+      } catch (error) {
+        console.error('Error fetching news:', error);
+        return [];
+      }
+    }
+
+    // Function to display news articles
+    function displayNewsArticles(articles) {
+      const newsListElement = document.getElementById('newsList');
+      newsListElement.innerHTML = ''; // Clear previous news
+
+      articles.forEach(article => {
+        const articleCard = `
+          <div class="col-md-4 mb-4">
+            <div class="card">
+              <img src="${article.urlToImage || 'https://via.placeholder.com/150'}" class="card-img-top" alt="News Image">
+              <div class="card-body">
+                <h5 class="card-title">${article.title}</h5>
+                <p class="card-text">${article.description}</p>
+                <a href="${article.url}" target="_blank" class="btn btn-primary">Read More</a>
+              </div>
+            </div>
+          </div>
+        `;
+        newsListElement.innerHTML += articleCard;
+      });
+    }
+
+    // Function to display pagination
+    function displayPagination(totalPages, currentPage) {
+      const paginationElement = document.getElementById('pagination');
+      paginationElement.innerHTML = ''; // Clear previous pagination
+
+      const prevButton = `<button class="btn btn-primary mr-2" onclick="loadPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>`;
+      paginationElement.innerHTML += prevButton;
+
+      for (let i = 1; i <= totalPages; i++) {
+        const pageButton = `<button class="btn btn-primary mr-2" onclick="loadPage(${i})" ${currentPage === i ? 'disabled' : ''}>${i}</button>`;
+        paginationElement.innerHTML += pageButton;
+      }
+
+      const nextButton = `<button class="btn btn-primary" onclick="loadPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`;
+      paginationElement.innerHTML += nextButton;
+    }
+
+    // Function to load news for a specific page
+    async function loadPage(pageNumber, category) {
+      const pageSize = 9; // Number of articles per page
+      const startIndex = (pageNumber - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+
+      const selectedCategory = category || document.getElementById('categorySelect').value;
+      const news = await fetchNews(selectedCategory);
+      const articles = news.slice(startIndex, endIndex);
+
+      displayNewsArticles(articles);
+      displayPagination(Math.ceil(news.length / pageSize), pageNumber);
+    }
+
+    // Update event listener for category selection change
+    document.getElementById('categorySelect').addEventListener('change', async function() {
+      loadPage(1, this.value);
+    });
+
+    // Initial load for default category (General) and first page
+    loadPage(1, 'general');
+  </script>
+</body>
+</html>
